@@ -1,0 +1,22 @@
+{
+    "name": "@modelcontextprotocol/coolify",
+    "version": "1.0.0",
+    "description": "MCP server for Coolify API integration",
+    "type": "module",
+    "bin": {
+        "mcp-coolify": "./build/index.js"
+    },
+    "scripts": {
+        "build": "npx tsc && node --eval \"import('fs').then(fs => fs.chmodSync('build/index.js', '755'))\"",
+        "start": "node build/index.js"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.5.0",
+        "zod": "^3.24.2",
+        "zod-to-json-schema": "^3.24.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "typescript": "^5.0.0"
+    }
+}
