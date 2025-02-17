@@ -21,10 +21,10 @@ const server = new Server(
 );
 
 // Helper function for API calls
-async function coolifyApiCall(endpoint: string, method = 'GET', body?: any) {
+async function coolifyApiCall(endpoint: string, method: string = 'GET', body?: any): Promise<any> {
   const baseUrl = process.env.COOLIFY_BASE_URL?.replace(/\/$/, '') || 'https://coolify.stuartmason.co.uk';
   const url = `${baseUrl}/api/v1${endpoint}`;
-  
+
   const response = await fetch(url, {
     method,
     headers: {
@@ -82,62 +82,63 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "list-resources",
-        description: "List all resources in Coolify",
+        description: "Retrieve a comprehensive list of all resources managed by Coolify. This includes applications, services, databases, and deployments.",
         inputSchema: zodToJsonSchema(z.object({})),
       },
       {
         name: "list-applications",
-        description: "List all applications",
+        description: "Fetch a list of all applications currently managed by Coolify. This provides an overview of all deployed applications.",
         inputSchema: zodToJsonSchema(z.object({})),
       },
       {
         name: "get-application",
-        description: "Get details of a specific application",
+        description: "Retrieve detailed information about a specific application using its UUID. This includes the application's status, configuration, and deployment details.",
         inputSchema: zodToJsonSchema(UuidSchema),
       },
       {
         name: "start-application",
-        description: "Start a specific application",
+        description: "Start a specific application using its UUID. This initiates the application and makes it available for use.",
         inputSchema: zodToJsonSchema(UuidSchema),
       },
       {
         name: "stop-application",
-        description: "Stop a specific application",
+        description: "Stop a specific application using its UUID. This halts the application and makes it unavailable.",
         inputSchema: zodToJsonSchema(UuidSchema),
       },
       {
         name: "restart-application",
-        description: "Restart a specific application",
+        description: "Restart a specific application using its UUID. This stops and then starts the application, applying any configuration changes.",
         inputSchema: zodToJsonSchema(UuidSchema),
       },
       {
         name: "list-services",
-        description: "List all services",
+        description: "Retrieve a list of all services managed by Coolify. This includes external services and microservices.",
         inputSchema: zodToJsonSchema(z.object({})),
       },
       {
         name: "list-databases",
-        description: "List all databases",
+        description: "Fetch a list of all databases managed by Coolify. This provides an overview of all database instances.",
         inputSchema: zodToJsonSchema(z.object({})),
       },
       {
         name: "list-deployments",
-        description: "List all running deployments",
+        description: "Retrieve a list of all running deployments in Coolify. This includes details about the deployment status and history.",
         inputSchema: zodToJsonSchema(z.object({})),
       },
       {
         name: "deploy",
-        description: "Deploy by tag or uuid",
+        description: "Deploy an application or service using a tag or UUID. This allows you to deploy new versions or updates to your applications.",
         inputSchema: zodToJsonSchema(DeploySchema),
       },
       {
         name: "update-application",
-        description: "Update application settings such as health checks",
+        description: "Update the settings of a specific application, such as health check configurations. This allows you to modify the application's behavior and monitoring settings.",
         inputSchema: zodToJsonSchema(z.object({
           uuid: z.string().describe("Resource UUID"),
           settings: ApplicationUpdateSchema
         })),
       },
+      // Additional tools can be added here
     ],
   };
 });
@@ -256,7 +257,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (params.tag) queryParams.append('tag', params.tag);
         if (params.uuid) queryParams.append('uuid', params.uuid);
         if (params.force) queryParams.append('force', 'true');
-        
+
         const result = await coolifyApiCall(`/deploy?${queryParams.toString()}`);
         return {
           content: [{
@@ -288,4 +289,3 @@ main().catch((error) => {
   console.error("Fatal error:", error);
   process.exit(1);
 });
-
