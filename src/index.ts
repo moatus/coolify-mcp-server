@@ -57,6 +57,25 @@ const DeploySchema = z.object({
   force: z.boolean().optional().describe("Force rebuild (without cache)"),
 });
 
+const ApplicationUpdateSchema = z.object({
+  health_check_enabled: z.boolean().optional(),
+  health_check_path: z.string().optional(),
+  health_check_port: z.string().nullable().optional(),
+  health_check_host: z.string().nullable().optional(),
+  health_check_method: z.string().optional(),
+  health_check_return_code: z.number().optional(),
+  health_check_scheme: z.string().optional(),
+  health_check_response_text: z.string().nullable().optional(),
+  health_check_interval: z.number().optional(),
+  health_check_timeout: z.number().optional(),
+  health_check_retries: z.number().optional(),
+  health_check_start_period: z.number().optional(),
+  // Add other updateable fields
+  name: z.string().optional(),
+  description: z.string().optional(),
+  domains: z.string().optional(),
+});
+
 // Set up request handlers
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
@@ -112,14 +131,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: zodToJsonSchema(DeploySchema),
       },
       {
-        name: "get-version",
-        description: "Get Coolify version",
-        inputSchema: zodToJsonSchema(z.object({})),
-      },
-      {
-        name: "health-check",
-        description: "Get system health status",
-        inputSchema: zodToJsonSchema(z.object({})),
+        name: "update-application",
+        description: "Update application settings such as health checks",
+        inputSchema: zodToJsonSchema(z.object({
+          uuid: z.string().describe("Resource UUID"),
+          settings: ApplicationUpdateSchema
+        })),
       },
     ],
   };
@@ -181,6 +198,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case "update-application": {
+        const { uuid, settings } = request.params.arguments as { uuid: string; settings: any };
+        const result = await coolifyApiCall(`/applications/${uuid}`, 'PATCH', settings);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(result, null, 2)
+          }]
+        };
+      }
+
       case "restart-application": {
         const { uuid } = UuidSchema.parse(request.params.arguments);
         const result = await coolifyApiCall(`/applications/${uuid}/restart`);
@@ -234,26 +262,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{
             type: "text",
             text: JSON.stringify(result, null, 2)
-          }]
-        };
-      }
-
-      case "get-version": {
-        const version = await coolifyApiCall('/version');
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(version, null, 2)
-          }]
-        };
-      }
-
-      case "health-check": {
-        const health = await coolifyApiCall('/health');
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify(health, null, 2)
           }]
         };
       }
