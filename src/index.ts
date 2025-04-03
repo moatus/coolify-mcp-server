@@ -138,6 +138,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           settings: ApplicationUpdateSchema
         })),
       },
+      {
+        name: "get-logs",
+        description: "Retrieve logs from either an application or a deployment using its UUID. Set the type parameter to specify which logs to retrieve ('application' or 'deployment').",
+        inputSchema: zodToJsonSchema(z.object({
+          uuid: z.string().describe("Resource UUID"),
+          type: z.enum(['application', 'deployment']).describe("Type of resource to get logs for"),
+          lines: z.number().optional().describe("Number of lines to show (only applicable for application logs, default: 100)")
+        })),
+      },
       // Additional tools can be added here
     ],
   };
@@ -259,6 +268,30 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (params.force) queryParams.append('force', 'true');
 
         const result = await coolifyApiCall(`/deploy?${queryParams.toString()}`);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(result, null, 2)
+          }]
+        };
+      }
+
+      case "get-logs": {
+        const { uuid, type, lines = 100 } = request.params.arguments as { 
+          uuid: string; 
+          type: 'application' | 'deployment';
+          lines?: number 
+        };
+        
+        let result;
+        if (type === 'application') {
+          result = await coolifyApiCall(`/applications/${uuid}/logs?lines=${lines}`);
+        } else if (type === 'deployment') {
+          result = await coolifyApiCall(`/deployments/${uuid}`);
+        } else {
+          throw new Error(`Invalid log type: ${type}`);
+        }
+        
         return {
           content: [{
             type: "text",
